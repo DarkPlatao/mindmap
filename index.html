@@ -1,0 +1,1959 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa Mental - Estilo Tony Buzan Avançado</title>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 0; 
+            overflow: hidden; 
+            background: #f5f5dc; 
+            font-family: 'Comic Sans MS', cursive; 
+        }
+        #canvas { 
+            display: block; 
+            cursor: crosshair; 
+            touch-action: none;
+        }
+        
+        /* Menu Superior */
+        #topMenu { 
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 8px 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        #topMenu h3 {
+            margin: 0;
+            color: white;
+            font-size: 18px;
+            margin-right: 20px;
+        }
+        
+        button { 
+            margin: 0;
+            padding: 6px 12px; 
+            cursor: pointer; 
+            border: none; 
+            border-radius: 4px; 
+            background: rgba(255,255,255,0.9);
+            color: #333;
+            font-weight: bold;
+            font-size: 12px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        
+        button:hover { 
+            background: white;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .delete-btn { 
+            background: #f44336;
+            color: white;
+        }
+        .delete-btn:hover { 
+            background: #da190b; 
+        }
+        
+        .undo-btn { 
+            background: #FF9800;
+            color: white;
+        }
+        .undo-btn:hover { 
+            background: #F57C00; 
+        }
+        
+        .color-btn { 
+            background: #9C27B0;
+            color: white;
+        }
+        .color-btn:hover { 
+            background: #7B1FA2; 
+        }
+        
+        .primary-btn {
+            background: #4CAF50;
+            color: white;
+        }
+        .primary-btn:hover {
+            background: #45a049;
+        }
+        
+        .separator {
+            width: 1px;
+            height: 25px;
+            background: rgba(255,255,255,0.3);
+            margin: 0 5px;
+        }
+        
+        #editModal { 
+            display: none; 
+            position: absolute; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3); 
+            z-index: 1000; 
+            min-width: 250px;
+        }
+        
+        #editModal input[type="text"] { 
+            width: 100%; 
+            padding: 8px; 
+            margin: 5px 0 10px; 
+            font-size: 16px; 
+            box-sizing: border-box;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        #editModal input[type="text"]:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        
+        #editModal button { 
+            display: block; 
+            width: 100%; 
+            margin: 3px 0; 
+        }
+        
+        #imagePreview { 
+            max-width: 100%; 
+            max-height: 100px; 
+            margin: 10px auto; 
+            display: block; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+        }
+        
+        input[type="file"] { 
+            display: none; 
+        }
+        
+        input[type="color"] {
+            width: 100%;
+            height: 40px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px 0;
+        }
+        
+        .image-upload-btn { 
+            background-color: #3498DB;
+            color: white;
+        }
+        .image-upload-btn:hover { 
+            background-color: #2980B9; 
+        }
+        
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin: 10px 0;
+        }
+        
+        .button-group button {
+            flex: 1;
+            min-width: 80px;
+        }
+        
+        #zoomInfo {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.9);
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 12px;
+            color: #666;
+            z-index: 10;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        /* Botão de adicionar sub-ramo */
+        .add-subbranch-btn {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #4CAF50;
+            color: white;
+            border: 2px solid white;
+            font-size: 16px;
+            line-height: 20px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            transition: all 0.2s;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .add-subbranch-btn:hover {
+            transform: scale(1.2);
+            background: #45a049;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.4);
+        }
+        
+        /* Tooltip */
+        .tooltip {
+            position: fixed;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 10000;
+            white-space: nowrap;
+        }
+        
+        /* Help Button */
+        #helpBtn {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #2196F3;
+            color: white;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        
+        #helpBtn:hover {
+            background: #1976D2;
+            transform: scale(1.1);
+        }
+        
+        #helpModal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            z-index: 10001;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        #helpModal h2 {
+            margin-top: 0;
+            color: #667eea;
+        }
+        
+        #helpModal ul {
+            line-height: 2;
+        }
+        
+        #helpModal .close-help {
+            float: right;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        #helpModal .close-help:hover {
+            color: #333;
+        }
+        
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 10000;
+        }
+    </style>
+</head>
+<body>
+    <!-- Menu Superior -->
+    <div id="topMenu">
+        <h3>🧠 Mapa Mental</h3>
+        
+        <button class="primary-btn" onclick="adicionarRamo()" title="Adicionar novo ramo principal">
+            ➕ Novo Ramo
+        </button>
+        
+        <div class="separator"></div>
+        
+        <button class="undo-btn" onclick="desfazer()" title="Desfazer (Ctrl+Z)">
+            ↶
+        </button>
+        <button class="undo-btn" onclick="refazer()" title="Refazer (Ctrl+Y)">
+            ↷
+        </button>
+        
+        <div class="separator"></div>
+        
+        <button onclick="salvar()" title="Salvar mapa mental como arquivo JSON (Ctrl+S)">
+            💾 Salvar
+        </button>
+        <button onclick="document.getElementById('loadFile').click()" title="Carregar mapa mental salvo anteriormente">
+            📂 Abrir
+        </button>
+        <button onclick="exportarImagem()" title="Exportar como imagem PNG (Ctrl+E)">
+            📸 Exportar
+        </button>
+        
+        <div class="separator"></div>
+        
+        <button class="delete-btn" onclick="limpar()" title="Limpar todo o mapa">
+            🗑️ Limpar
+        </button>
+        
+        <input type="file" id="loadFile" accept=".json" onchange="carregar(event)">
+    </div>
+    
+    <!-- Zoom Info -->
+    <div id="zoomInfo">
+        Zoom: <span id="zoomValue">100%</span>
+    </div>
+    
+    <!-- Help Button -->
+    <button id="helpBtn" onclick="toggleHelp()" title="Ajuda">?</button>
+    
+    <!-- Overlay -->
+    <div class="overlay" id="overlay" onclick="closeHelp()"></div>
+    
+    <!-- Help Modal -->
+    <div id="helpModal">
+        <span class="close-help" onclick="closeHelp()">×</span>
+        <h2>📖 Como Usar</h2>
+        <h3>🎯 Criar Ramos:</h3>
+        <ul>
+            <li><strong>Novo Ramo Principal:</strong> Clique no botão "➕ Novo Ramo"</li>
+            <li><strong>Sub-Ramo:</strong> Clique no botão <strong>+</strong> verde na ponta de qualquer ramo</li>
+        </ul>
+        
+        <h3>✏️ Editar:</h3>
+        <ul>
+            <li><strong>Duplo-clique</strong> em qualquer ramo para editar texto, cor, ícone ou adicionar imagem</li>
+            <li><strong>Arraste</strong> os ramos para reorganizar</li>
+        </ul>
+        
+        <h3>🔍 Navegação:</h3>
+        <ul>
+            <li><strong>Scroll do mouse:</strong> Zoom in/out</li>
+            <li><strong>Shift + Arraste:</strong> Mover a tela</li>
+            <li><strong>+/-:</strong> Zoom com teclado</li>
+            <li><strong>Ctrl+0:</strong> Resetar zoom</li>
+        </ul>
+        
+        <h3>💾 Salvar e Carregar:</h3>
+        <ul>
+            <li><strong>Salvar:</strong> Exporta seu mapa como arquivo .json (você pode editá-lo depois)</li>
+            <li><strong>Abrir:</strong> Carrega um mapa salvo anteriormente</li>
+            <li><strong>Exportar:</strong> Salva como imagem PNG para compartilhar</li>
+        </ul>
+        
+        <h3>⌨️ Atalhos:</h3>
+        <ul>
+            <li><strong>Ctrl+Z:</strong> Desfazer</li>
+            <li><strong>Ctrl+Y:</strong> Refazer</li>
+            <li><strong>Ctrl+S:</strong> Salvar</li>
+            <li><strong>Ctrl+E:</strong> Exportar PNG</li>
+            <li><strong>Delete:</strong> Excluir ramo selecionado</li>
+            <li><strong>Esc:</strong> Fechar janela de edição</li>
+        </ul>
+		<h3>🖼️ Imagens Livres:</h3>
+        <ul>
+            <li><strong>Ctrl+V:</strong> Colar imagem da área de transferência</li>
+            <li><strong>Arrastar:</strong> Mover imagem livremente</li>
+            <li><strong>Botão +:</strong> Aumentar tamanho</li>
+            <li><strong>Botão -:</strong> Diminuir tamanho</li>
+            <li><strong>Delete:</strong> Excluir imagem selecionada</li>
+        </ul>
+    </div>
+    <!-- Edit Modal -->
+<div id="editModal">
+    <input type="text" id="editText" placeholder="Digite a Palavra-Chave">
+    <button class="primary-btn" onclick="salvarEdicao()">✅ Salvar</button>
+    <button class="delete-btn" onclick="excluirNo()">🗑️ Excluir Ramo</button>
+    <button onclick="fecharModal()">❌ Cancelar</button>
+</div>
+
+    <canvas id="canvas"></canvas>
+<script>
+// ==================== CONFIGURAÇÃO ====================
+const CONFIG = {
+    ESPESSURA_BASE: 80,
+    DECREMENTO_POR_NIVEL: 40,
+    RAIO_CENTRO: 60,
+    DISTANCIA_RAMO_PRIMARIO: 150,
+    DISTANCIA_SUB_RAMO: 70,
+    THROTTLE_MS: 16,
+    MAX_HISTORICO: 50,
+    CLICK_THRESHOLD: 200,
+    CORES_BUZAN: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B739', '#5DADE2', '#58D68D']
+};
+
+// ==================== VARIÁVEIS GLOBAIS ====================
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight - 50; // Espaço para o menu
+canvas.style.marginTop = '50px';
+
+let nos = [];
+let conexoes = [];
+let noSelecionado = null;
+let noArrastando = null;
+let noHover = null;
+let offsetX = 0, offsetY = 0;
+let mouseMoveu = false;
+let mouseDownTime = 0;
+
+// Zoom e Pan
+let escala = 1;
+let offsetCanvasX = 0;
+let offsetCanvasY = 0;
+let isPanning = false;
+let panStartX = 0;
+let panStartY = 0;
+
+// Touch
+let touchStartDist = 0;
+
+// Performance
+let ultimoRender = 0;
+
+// Histórico (Undo/Redo)
+const historico = [];
+const historicoRedo = [];
+
+const imageCache = {};
+const curvaCache = new Map();
+
+let corAtual = 0;
+
+// ========== IMAGENS LIVRES ==========
+let imagensLivres = [];
+let imagemSelecionada = null;
+let imagemArrastando = null;
+let offsetImgX = 0;
+let offsetImgY = 0;
+
+// Botões de adicionar sub-ramo
+let botoesSubRamo = [];
+
+const centro = {
+    x: canvas.width / 2,
+    y: (canvas.height) / 2,
+    texto: 'IDEIA CENTRAL',
+    icone: '💡',
+    imageURL: null,
+    cor: '#FF6B6B',
+    raio: CONFIG.RAIO_CENTRO,
+    nivel: 0
+};
+
+// ==================== FUNÇÕES DE AJUDA ====================
+function toggleHelp() {
+    const helpModal = document.getElementById('helpModal');
+    const overlay = document.getElementById('overlay');
+    if (helpModal.style.display === 'block') {
+        closeHelp();
+    } else {
+        helpModal.style.display = 'block';
+        overlay.style.display = 'block';
+    }
+}
+
+function closeHelp() {
+    document.getElementById('helpModal').style.display = 'none';
+    document.getElementById('overlay').style.display = 'none';
+}
+
+// ==================== FUNÇÕES DE HISTÓRICO ====================
+function salvarEstado() {
+    const estado = {
+        nos: JSON.parse(JSON.stringify(nos.map(n => ({...n, pai: undefined})))),
+        conexoes: conexoes.map(c => ({
+            deIndex: c.de === centro ? -1 : nos.indexOf(c.de),
+            paraIndex: nos.indexOf(c.para),
+            cor: c.cor
+        })),
+        centro: JSON.parse(JSON.stringify(centro)),
+        corAtual: corAtual
+    };
+    historico.push(estado);
+    if (historico.length > CONFIG.MAX_HISTORICO) historico.shift();
+    historicoRedo.length = 0;
+}
+
+function restaurarEstado(dados) {
+    nos = dados.nos;
+    Object.assign(centro, dados.centro);
+    corAtual = dados.corAtual || 0;
+    conexoes = dados.conexoes.map(c => {
+        const noDe = c.deIndex === -1 ? centro : nos[c.deIndex];
+        const noPara = nos[c.paraIndex];
+        if (noPara) {
+            noPara.pai = noDe;
+            noPara.nivel = calcularNivel(noPara);
+        }
+        return { de: noDe, para: noPara, cor: c.cor };
+    }).filter(c => c.para);
+    
+    // Recarregar imagens
+    nos.forEach(n => {
+        if(n.imageURL) loadImage(n.imageURL);
+    });
+    if(centro.imageURL) loadImage(centro.imageURL);
+    
+    renderizar();
+}
+
+function desfazer() {
+    if (historico.length === 0) {
+        alert('Nada para desfazer!');
+        return;
+    }
+    
+    const estadoAtual = {
+        nos: JSON.parse(JSON.stringify(nos.map(n => ({...n, pai: undefined})))),
+        conexoes: conexoes.map(c => ({
+            deIndex: c.de === centro ? -1 : nos.indexOf(c.de),
+            paraIndex: nos.indexOf(c.para),
+            cor: c.cor
+        })),
+        centro: JSON.parse(JSON.stringify(centro)),
+        corAtual: corAtual
+    };
+    historicoRedo.push(estadoAtual);
+    
+    const estadoAnterior = historico.pop();
+    restaurarEstado(estadoAnterior);
+}
+
+function refazer() {
+    if (historicoRedo.length === 0) {
+        alert('Nada para refazer!');
+        return;
+    }
+    
+    const estadoAtual = {
+        nos: JSON.parse(JSON.stringify(nos.map(n => ({...n, pai: undefined})))),
+        conexoes: conexoes.map(c => ({
+            deIndex: c.de === centro ? -1 : nos.indexOf(c.de),
+            paraIndex: nos.indexOf(c.para),
+            cor: c.cor
+        })),
+        centro: JSON.parse(JSON.stringify(centro)),
+        corAtual: corAtual
+    };
+    historico.push(estadoAtual);
+    
+    const estadoRedo = historicoRedo.pop();
+    restaurarEstado(estadoRedo);
+}
+
+// ==================== FUNÇÕES HIERÁRQUICAS ====================
+function calcularNivel(no) {
+    if (no === centro) return 0;
+    if (no.pai) return no.pai.nivel + 1;
+    const conexao = conexoes.find(c => c.para === no);
+    if (conexao && conexao.de) {
+        no.pai = conexao.de;
+        return calcularNivel(no.pai) + 1;
+    }
+    return 1;
+}
+
+// ==================== FUNÇÕES DE UTILIDADE ====================
+function calcularPontoNaBorda(x1, y1, x2, y2, raio) {
+    const angulo = Math.atan2(y2 - y1, x2 - x1);
+    return {
+        x: x1 + Math.cos(angulo) * raio,
+        y: y1 + Math.sin(angulo) * raio
+    };
+}
+
+function loadImage(url) {
+    if (imageCache[url]) return Promise.resolve(imageCache[url]);
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            imageCache[url] = img;
+            resolve(img);
+        };
+        img.onerror = () => {
+            console.error("Erro ao carregar imagem:", url);
+            resolve(null);
+        };
+        img.src = url;
+    });
+}
+
+function calcularCurva(x1, y1, x2, y2, raioInicio) {
+    const inicio = raioInicio > 0 ? calcularPontoNaBorda(x1, y1, x2, y2, raioInicio) : { x: x1, y: y1 };
+    const dx = x2 - inicio.x;
+    const dy = y2 - inicio.y;
+    const distancia = Math.sqrt(dx * dx + dy * dy) || 1;
+    const angulo = Math.atan2(dy, dx);
+    const distCp1 = distancia * 0.35;
+    const distCp2 = distancia * 0.65;
+    const perpAng = angulo + Math.PI / 2;
+    const hash = Math.abs(Math.floor((inicio.x + inicio.y + x2 + y2)));
+    const sign = (hash % 2 === 0) ? 1 : -1;
+    const maxOffset = Math.min(120, distancia * 0.25);
+    const offset = maxOffset * (0.6 + (hash % 40) / 100) * sign;
+    const cp1x = inicio.x + Math.cos(angulo) * distCp1 + Math.cos(perpAng) * offset;
+    const cp1y = inicio.y + Math.sin(angulo) * distCp1 + Math.sin(perpAng) * offset;
+    const cp2x = inicio.x + Math.cos(angulo) * distCp2 - Math.cos(perpAng) * offset * 0.9;
+    const cp2y = inicio.y + Math.sin(angulo) * distCp2 - Math.sin(perpAng) * offset * 0.9;
+    return { inicio, cp1: { x: cp1x, y: cp1y }, cp2: { x: cp2x, y: cp2y }, fim: { x: x2, y: y2 } };
+}
+
+function atualizarZoomDisplay() {
+    document.getElementById('zoomValue').textContent = Math.round(escala * 100) + '%';
+}
+
+
+// ==================== FUNÇÕES DE IMAGENS LIVRES ====================
+function adicionarImagemLivre(imgSrc, x, y) {
+    const img = new Image();
+    img.onload = () => {
+        const imagemObj = {
+            img: img,
+            x: x || canvas.width / 2,
+            y: y || canvas.height / 2,
+            largura: img.width,
+            altura: img.height,
+            escalaImg: 1
+        };
+        
+        // Redimensionar se muito grande
+        const maxSize = 300;
+        if (imagemObj.largura > maxSize || imagemObj.altura > maxSize) {
+            const ratio = Math.min(maxSize / imagemObj.largura, maxSize / imagemObj.altura);
+            imagemObj.escalaImg = ratio;
+        }
+        
+        imagensLivres.push(imagemObj);
+        renderizar();
+    };
+    img.src = imgSrc;
+}
+
+function encontrarImagem(x, y) {
+    const xTransformado = (x - offsetCanvasX) / escala;
+    const yTransformado = (y - offsetCanvasY) / escala;
+    
+    // Percorrer de trás para frente (última desenhada = primeira clicável)
+    for (let i = imagensLivres.length - 1; i >= 0; i--) {
+        const img = imagensLivres[i];
+        const w = img.largura * img.escalaImg;
+        const h = img.altura * img.escalaImg;
+        
+        if (xTransformado >= img.x - w/2 && xTransformado <= img.x + w/2 &&
+            yTransformado >= img.y - h/2 && yTransformado <= img.y + h/2) {
+            return img;
+        }
+    }
+    return null;
+}
+
+function redimensionarImagem(imagem, fator) {
+    if (imagem) {
+        salvarEstado();
+        imagem.escalaImg = Math.max(0.1, Math.min(5, imagem.escalaImg * fator));
+        renderizar();
+    }
+}
+
+function excluirImagemSelecionada() {
+    if (imagemSelecionada) {
+        salvarEstado();
+        imagensLivres = imagensLivres.filter(img => img !== imagemSelecionada);
+        imagemSelecionada = null;
+        renderizar();
+    }
+}
+
+function desenharImagensLivres() {
+    imagensLivres.forEach(imgObj => {
+        const w = imgObj.largura * imgObj.escalaImg;
+        const h = imgObj.altura * imgObj.escalaImg;
+        
+        ctx.save();
+        
+        // Borda de seleção
+        if (imgObj === imagemSelecionada) {
+            ctx.strokeStyle = '#2196F3';
+            ctx.lineWidth = 3 / escala;
+            ctx.setLineDash([10 / escala, 5 / escala]);
+            ctx.strokeRect(imgObj.x - w/2, imgObj.y - h/2, w, h);
+            ctx.setLineDash([]);
+        }
+        
+        ctx.drawImage(imgObj.img, imgObj.x - w/2, imgObj.y - h/2, w, h);
+        ctx.restore();
+    });
+}
+
+function desenharBotoesImagem() {
+    if (!imagemSelecionada) return;
+    
+    const w = imagemSelecionada.largura * imagemSelecionada.escalaImg;
+    const h = imagemSelecionada.altura * imagemSelecionada.escalaImg;
+    const x = imagemSelecionada.x * escala + offsetCanvasX;
+    const y = imagemSelecionada.y * escala + offsetCanvasY;
+    
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    
+    // Botão +
+    const btnMaisX = x + (w * escala / 2) + 30;
+    const btnMaisY = y;
+    ctx.beginPath();
+    ctx.arc(btnMaisX, btnMaisY, 15, 0, Math.PI * 2);
+    ctx.fillStyle = '#4CAF50';
+    ctx.fill();
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 18px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('+', btnMaisX, btnMaisY);
+    
+    // Botão -
+    const btnMenosX = x + (w * escala / 2) + 30;
+    const btnMenosY = y + 35;
+    ctx.beginPath();
+    ctx.arc(btnMenosX, btnMenosY, 15, 0, Math.PI * 2);
+    ctx.fillStyle = '#f44336';
+    ctx.fill();
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = 'white';
+    ctx.fillText('−', btnMenosX, btnMenosY);
+    
+    ctx.restore();
+}
+
+// ==================== FUNÇÕES DE DESENHO ====================
+async function desenharConteudoNaCurva(curva, no) {
+    const { inicio, cp1, cp2, fim } = curva;
+    let textoOriginal = no.texto.toUpperCase();
+    const palavras = textoOriginal.split(' ').filter(p => p.length > 0);
+    const imagem = no.imageURL ? await loadImage(no.imageURL) : null;
+    
+    ctx.save();
+    ctx.fillStyle = '#333';
+    ctx.textAlign = 'center';
+    
+    const getBezierPoint = (t, p0, p1, p2, p3) => (1-t)**3 * p0 + 3*(1-t)**2 * t * p1 + 3*(1-t) * t**2 * p2 + t**3 * p3;
+    
+    if (imagem) {
+        const tImagem = 0.3;
+        const xImg = getBezierPoint(tImagem, inicio.x, cp1.x, cp2.x, fim.x);
+        const yImg = getBezierPoint(tImagem, inicio.y, cp1.y, cp2.y, fim.y);
+        const maxTamanho = 50;
+        let w = imagem.width;
+        let h = imagem.height;
+        if (w > maxTamanho || h > maxTamanho) {
+            const ratio = Math.min(maxTamanho / w, maxTamanho / h);
+            w *= ratio;
+            h *= ratio;
+        }
+        ctx.save();
+        ctx.translate(xImg, yImg);
+        ctx.drawImage(imagem, -w/2, -h - 10, w, h);
+        ctx.restore();
+    }
+    
+    let tStart = imagem ? 0.4 : 0.3;
+    let tEnd = 0.7;
+    const baseLineOffset = 15;
+    const lineHeight = 20;
+    ctx.font = 'bold 20px Comic Sans MS';
+
+    for (let pIdx = 0; pIdx < palavras.length; pIdx++) {
+        const palavra = palavras[pIdx];
+        const textoParaDesenhar = palavra.split('');
+        let comprimentoTotal = 0;
+        for(let char of textoParaDesenhar) {
+            comprimentoTotal += ctx.measureText(char).width;
+        }
+        let comprimentoPercorrido = 0;
+        let currentYOffset = -baseLineOffset;
+        if (palavras.length > 1) {
+            const totalShift = (palavras.length - 1) * lineHeight;
+            currentYOffset = -baseLineOffset + (pIdx * lineHeight) - (totalShift / 2);
+        }
+        let inverterTextoCurva = fim.x < inicio.x;
+        let caracteresParaDesenhar = inverterTextoCurva ? [...textoParaDesenhar].reverse() : textoParaDesenhar;
+
+        for (let i = 0; i < caracteresParaDesenhar.length; i++) {
+            const char = caracteresParaDesenhar[i];
+            const larguraChar = ctx.measureText(char).width;
+            const t = tStart + (tEnd - tStart) * (comprimentoPercorrido + larguraChar / 2) / comprimentoTotal;
+            if (t > tEnd) break;
+            const x = getBezierPoint(t, inicio.x, cp1.x, cp2.x, fim.x);
+            const y = getBezierPoint(t, inicio.y, cp1.y, cp2.y, fim.y);
+            const tNext = Math.min(t + 0.01, tEnd);
+            const xNext = getBezierPoint(tNext, inicio.x, cp1.x, cp2.x, fim.x);
+            const yNext = getBezierPoint(tNext, inicio.y, cp1.y, cp2.y, fim.y);
+            let anguloChar = Math.atan2(yNext - y, xNext - x);
+            if (xNext < x) {
+                anguloChar += Math.PI;
+            }
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(anguloChar);
+            ctx.fillText(char, 0, currentYOffset);
+            ctx.restore();
+            comprimentoPercorrido += larguraChar;
+        }
+    }
+    ctx.restore();
+}
+
+function desenharLinha(conexao) {
+    const curva = curvaCache.get(conexao.para);
+    const cor = conexao.cor;
+    const no = conexao.para;
+    const { inicio, cp1, cp2, fim } = curva;
+    let maxEspessura = CONFIG.ESPESSURA_BASE - (no.nivel * CONFIG.DECREMENTO_POR_NIVEL);
+    maxEspessura = Math.max(8, maxEspessura);
+    const passos = 100;
+    ctx.lineCap = 'round';
+    for(let i = 0; i <= passos; i++) {
+        const t = i / passos;
+        const getBezierPoint = (t, p0, p1, p2, p3) => (1-t)**3 * p0 + 3*(1-t)**2 * t * p1 + 3*(1-t) * t**2 * p2 + t**3 * p3;
+        const x = getBezierPoint(t, inicio.x, cp1.x, cp2.x, fim.x);
+        const y = getBezierPoint(t, inicio.y, cp1.y, cp2.y, fim.y);
+        let espessura = maxEspessura * (1 - t)**2 + 4;
+        espessura = Math.max(2, espessura);
+        ctx.beginPath();
+        ctx.arc(x, y, espessura / 2, 0, Math.PI * 2);
+        ctx.fillStyle = cor;
+        ctx.fill();
+    }
+}
+
+function desenharNoCentro(no) {
+    ctx.save();
+    
+    if (no === noHover) {
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+        ctx.shadowBlur = 15;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+    }
+    
+    ctx.beginPath();
+    ctx.arc(no.x, no.y, no.raio, 0, Math.PI * 2);
+    ctx.fillStyle = no.cor;
+    ctx.fill();
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    
+    ctx.shadowBlur = 0;
+    
+    ctx.fillStyle = '#333';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const textoDisplay = no.texto.toUpperCase();
+    if(no.icone) {
+        ctx.font = 'bold 30px Arial';
+        ctx.fillText(no.icone, no.x, no.y - 15);
+        ctx.font = 'bold 16px Comic Sans MS';
+        ctx.fillText(textoDisplay, no.x, no.y + 15);
+    } else {
+        ctx.font = 'bold 18px Comic Sans MS';
+        ctx.fillText(textoDisplay, no.x, no.y);
+    }
+    
+    ctx.restore();
+}
+
+function desenharBotoesSubRamo() {
+    botoesSubRamo = [];
+    
+    nos.forEach(no => {
+        const curva = curvaCache.get(no);
+        if (curva) {
+            // Posição do botão na ponta do ramo
+            const btnX = curva.fim.x * escala + offsetCanvasX;
+            const btnY = curva.fim.y * escala + offsetCanvasY;
+            
+            botoesSubRamo.push({
+                x: btnX,
+                y: btnY,
+                no: no,
+                raio: 12
+            });
+            
+            // Desenhar o botão
+            ctx.save();
+            ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transformações
+            
+            ctx.beginPath();
+            ctx.arc(btnX, btnY, 12, 0, Math.PI * 2);
+            ctx.fillStyle = '#4CAF50';
+            ctx.fill();
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('+', btnX, btnY);
+            
+            ctx.restore();
+        }
+    });
+}
+
+function renderizar() {
+    ctx.save();
+    ctx.fillStyle = '#f5f5dc';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    ctx.translate(offsetCanvasX, offsetCanvasY);
+    ctx.scale(escala, escala);
+    
+    curvaCache.clear();
+    centro.nivel = 0;
+    
+    conexoes.forEach(conexao => {
+        conexao.para.nivel = calcularNivel(conexao.para);
+        const raioInicio = conexao.de === centro ? centro.raio : 0;
+        const curva = calcularCurva(
+            conexao.de.x, conexao.de.y,
+            conexao.para.x, conexao.para.y,
+            raioInicio
+        );
+        curvaCache.set(conexao.para, curva);
+    });
+    
+    conexoes.forEach(conexao => {
+        desenharLinha(conexao);
+    });
+    
+    nos.forEach(no => {
+        const curva = curvaCache.get(no);
+        if(curva) {
+            desenharConteudoNaCurva(curva, no);
+        }
+    });
+    
+    desenharNoCentro(centro);
+    
+    desenharImagensLivres();  // ✅ Desenhar imagens
+    
+    ctx.restore();  // ✅ Fechar transformações
+    
+    desenharBotoesImagem();  // ✅ Botões de imagem (fora das transformações)
+    desenharBotoesSubRamo();  // ✅ Botões de sub-ramo (fora das transformações)
+    
+    atualizarZoomDisplay();
+}
+
+// ==================== FUNÇÕES DE INTERAÇÃO ====================
+function adicionarRamo(noPai = centro) {
+    salvarEstado();
+    
+    const numRamos = conexoes.filter(c => c.de === noPai).length;
+    let xInicial = noPai.x;
+    let yInicial = noPai.y;
+    let corDoRamo = noPai.cor;
+    const novoNivel = noPai.nivel + 1;
+    
+    if (noPai === centro) {
+        const angulo = (numRamos * (Math.PI * 2 / 6)) + Math.random() * 0.3;
+        const distancia = centro.raio + CONFIG.DISTANCIA_RAMO_PRIMARIO + Math.random() * 50;
+        xInicial = centro.x + Math.cos(angulo) * distancia;
+        yInicial = centro.y + Math.sin(angulo) * distancia;
+        corDoRamo = CONFIG.CORES_BUZAN[corAtual % CONFIG.CORES_BUZAN.length];
+        corAtual++;
+    } else {
+        const conexaoPai = conexoes.find(c => c.para === noPai);
+        const pontoReferenciaPai = conexaoPai ? conexaoPai.de : centro;
+        const anguloPaiDirecao = Math.atan2(noPai.y - pontoReferenciaPai.y, noPai.x - pontoReferenciaPai.x);
+        const anguloDesvio = (Math.PI / 6) * (numRamos % 2 === 0 ? 1 : -1);
+        const anguloNovoRamo = anguloPaiDirecao + anguloDesvio;
+        const distanciaSubRamo = CONFIG.DISTANCIA_SUB_RAMO + Math.random() * 20;
+        xInicial = noPai.x + Math.cos(anguloNovoRamo) * distanciaSubRamo;
+        yInicial = noPai.y + Math.sin(anguloNovoRamo) * distanciaSubRamo;
+        corDoRamo = noPai.cor;
+    }
+    
+    const novoNo = {
+        x: xInicial,
+        y: yInicial,
+        texto: novoNivel === 1 ? `RAMO ${numRamos + 1}` : `SUB-RAMO ${novoNivel}`,
+        icone: '',
+        imageURL: null,
+        cor: corDoRamo,
+        pai: noPai,
+        nivel: novoNivel
+    };
+    
+    nos.push(novoNo);
+    conexoes.push({ de: noPai, para: novoNo, cor: novoNo.cor });
+    renderizar();
+}
+
+function limpar() {
+    if(confirm('Deseja limpar o mapa? Esta ação é irreversível.')) {
+        salvarEstado();
+        nos = [];
+        conexoes = [];
+        curvaCache.clear();
+    // ✅ ADICIONAR ESTA LINHA:
+        imagensLivres = [];
+        imagemSelecionada = null;
+        Object.assign(centro, {
+            texto: 'IDEIA CENTRAL',
+            icone: '💡',
+            imageURL: null,
+            cor: '#FF6B6B',
+            raio: CONFIG.RAIO_CENTRO,
+            nivel: 0
+        });
+        corAtual = 0;
+        renderizar();
+    }
+}
+
+function encontrarNo(x, y) {
+    const xTransformado = (x - offsetCanvasX) / escala;
+    const yTransformado = (y - offsetCanvasY) / escala;
+    
+    const distCentro = Math.sqrt((xTransformado - centro.x)**2 + (yTransformado - centro.y)**2);
+    if(distCentro < centro.raio) return centro;
+    
+    for(let no of nos) {
+        const largura = 100;
+        const altura = 60;
+        if(xTransformado >= no.x - largura/2 && xTransformado <= no.x + largura/2 &&
+           yTransformado >= no.y - altura/2 && yTransformado <= no.y + altura/2) {
+            return no;
+        }
+    }
+    
+    for (let no of nos) {
+        const curva = curvaCache.get(no);
+        if (curva) {
+            const meioX = (curva.inicio.x + curva.fim.x) / 2;
+            const meioY = (curva.inicio.y + curva.fim.y) / 2;
+            const largura = 150, altura = 60;
+            const distDoCentro = Math.sqrt((xTransformado - centro.x)**2 + (yTransformado - centro.y)**2);
+            if(distDoCentro < centro.raio + 10) continue;
+            if (xTransformado >= meioX - largura/2 && xTransformado <= meioX + largura/2 &&
+                yTransformado >= meioY - altura/2 && yTransformado <= meioY + altura/2) {
+                return no;
+            }
+        }
+    }
+    return null;
+}
+
+function encontrarBotaoSubRamo(x, y) {
+    for (let btn of botoesSubRamo) {
+        const dist = Math.sqrt((x - btn.x)**2 + (y - btn.y)**2);
+        if (dist < btn.raio) {
+            return btn.no;
+        }
+    }
+    return null;
+}
+
+function previewImage(event) {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+    const preview = document.getElementById('imagePreview');
+    reader.onload = function(e) {
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+    };
+    if (file) {
+        preview.src = '';
+        preview.style.display = 'none';
+        reader.readAsDataURL(file);
+    }
+}
+
+function abrirModal(no) {
+    noSelecionado = no;
+    const modal = document.getElementById('editModal');
+    const input = document.getElementById('editText');
+    
+    input.value = no.texto;
+    
+    // ❌ REMOVER ESTAS LINHAS (corPicker e preview não existem mais)
+    // const preview = document.getElementById('imagePreview');
+    // const corPicker = document.getElementById('corPicker');
+    // corPicker.value = no.cor;
+    // if (no.imageURL) {
+    //     preview.src = no.imageURL;
+    //     preview.style.display = 'block';
+    // } else {
+    //     preview.src = '';
+    //     preview.style.display = 'none';
+    // }
+    
+    document.querySelector('.delete-btn').style.display = (no === centro) ? 'none' : 'block';
+    
+    modal.style.display = 'block';
+    modal.style.left = (no.x * escala + offsetCanvasX + 30) + 'px';
+    modal.style.top = (no.y * escala + offsetCanvasY + 50) + 'px';
+    
+    if (parseInt(modal.style.left) + modal.offsetWidth > canvas.width) {
+        modal.style.left = (no.x * escala + offsetCanvasX - modal.offsetWidth - 30) + 'px';
+    }
+    if (parseInt(modal.style.top) < 60) {
+        modal.style.top = '60px';
+    }
+    
+    input.focus();
+}
+
+function fecharModal() {
+    document.getElementById('editModal').style.display = 'none';
+    noSelecionado = null;
+}
+
+function salvarEdicao() {
+    if(noSelecionado) {
+        salvarEstado();
+        noSelecionado.texto = document.getElementById('editText').value;
+        renderizar();
+    }
+    fecharModal();
+}
+
+function adicionarIcone(icone) {
+    if(noSelecionado) {
+        noSelecionado.icone = icone;
+        noSelecionado.imageURL = null;
+        document.getElementById('imagePreview').src = '';
+        document.getElementById('imagePreview').style.display = 'none';
+        renderizar();
+    }
+}
+
+function alterarCor() {
+    if (noSelecionado) {
+        salvarEstado();
+        const novaCor = document.getElementById('corPicker').value;
+        noSelecionado.cor = novaCor;
+        
+        function atualizarCorFilhos(no, cor) {
+            conexoes.filter(c => c.de === no).forEach(c => {
+                c.cor = cor;
+                c.para.cor = cor;
+                atualizarCorFilhos(c.para, cor);
+            });
+        }
+        
+        atualizarCorFilhos(noSelecionado, novaCor);
+        renderizar();
+    }
+}
+
+function excluirNo() {
+    if(noSelecionado && noSelecionado !== centro) {
+        salvarEstado();
+        function excluirRecursivo(no) {
+            const filhos = conexoes.filter(c => c.de === no).map(c => c.para);
+            filhos.forEach(filho => excluirRecursivo(filho));
+            conexoes = conexoes.filter(c => c.de !== no && c.para !== no);
+            nos = nos.filter(n => n !== no);
+        }
+        excluirRecursivo(noSelecionado);
+        renderizar();
+    }
+    fecharModal();
+}
+
+
+function salvar() {
+    const dados = {
+        nos: nos.map(n => ({...n, pai: undefined})),
+        conexoes: conexoes.map(c => ({
+            deIndex: c.de === centro ? -1 : nos.indexOf(c.de),
+            paraIndex: nos.indexOf(c.para),
+            cor: c.cor
+        })),
+        centro: centro,
+        corAtual: corAtual,
+        // ✅ ADICIONAR ESTA LINHA:
+        imagensLivres: imagensLivres.map(img => ({
+            src: img.img.src,
+            x: img.x,
+            y: img.y,
+            largura: img.largura,
+            altura: img.altura,
+            escalaImg: img.escalaImg
+        }))
+    };
+    const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'mapa-mental-buzan-' + new Date().toISOString().slice(0,10) + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function carregar(event) {
+    const file = event.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const dados = JSON.parse(e.target.result);
+            
+            if (!dados.nos || !Array.isArray(dados.nos)) {
+                throw new Error('Formato inválido: nos não encontrado');
+            }
+            if (!dados.conexoes || !Array.isArray(dados.conexoes)) {
+                throw new Error('Formato inválido: conexoes não encontrado');
+            }
+            if (!dados.centro) {
+                throw new Error('Formato inválido: centro não encontrado');
+            }
+            
+            salvarEstado();
+            nos = dados.nos;
+            Object.assign(centro, dados.centro);
+            corAtual = dados.corAtual || 0;
+            
+            conexoes = dados.conexoes.map(c => {
+                const noDe = c.deIndex === -1 ? centro : nos[c.deIndex];
+                const noPara = nos[c.paraIndex];
+                if (noPara) {
+                    noPara.pai = noDe;
+                    noPara.nivel = calcularNivel(noPara);
+                }
+                return {
+                    de: noDe,
+                    para: noPara,
+                    cor: c.cor
+                };
+            }).filter(c => c.para);
+            
+            nos.forEach(n => {
+                if(n.imageURL) loadImage(n.imageURL);
+            });
+            if(centro.imageURL) loadImage(centro.imageURL);
+			// Carregar imagens livres
+            if (dados.imagensLivres && Array.isArray(dados.imagensLivres)) {
+                imagensLivres = [];
+                dados.imagensLivres.forEach(imgData => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const imagemObj = {
+                            img: img,
+                            x: imgData.x,
+                            y: imgData.y,
+                            largura: imgData.largura,
+                            altura: imgData.altura,
+                            escalaImg: imgData.escalaImg || 1
+                        };
+                        imagensLivres.push(imagemObj);
+                        renderizar();
+                    };
+                    img.src = imgData.src;
+                });
+            }
+            
+            renderizar();
+            alert('Mapa carregado com sucesso!');
+        } catch(err) {
+            alert('Erro ao carregar arquivo: ' + err.message);
+            console.error(err);
+        }
+    };
+    reader.readAsText(file);
+}
+
+function exportarImagem() {
+    // Carregar todas as imagens primeiro
+    const promessasImagens = nos.map(n => n.imageURL ? loadImage(n.imageURL) : Promise.resolve());
+    if(centro.imageURL) promessasImagens.push(loadImage(centro.imageURL));
+    
+    // Adicionar imagens livres
+    imagensLivres.forEach(img => {
+        if(img.img && img.img.src) {
+            promessasImagens.push(loadImage(img.img.src));
+        }
+    });
+    
+    Promise.all(promessasImagens).then(() => {
+        // Salvar estado atual
+        const escalaTemp = escala;
+        const offsetXTemp = offsetCanvasX;
+        const offsetYTemp = offsetCanvasY;
+        
+        // Calcular limites do mapa (bounding box)
+        let minX = centro.x - centro.raio;
+        let maxX = centro.x + centro.raio;
+        let minY = centro.y - centro.raio;
+        let maxY = centro.y + centro.raio;
+        
+        // Verificar todos os nós
+        nos.forEach(no => {
+            minX = Math.min(minX, no.x - 100);
+            maxX = Math.max(maxX, no.x + 100);
+            minY = Math.min(minY, no.y - 100);
+            maxY = Math.max(maxY, no.y + 100);
+        });
+        
+        // Verificar imagens livres
+        imagensLivres.forEach(img => {
+            const w = img.largura * img.escalaImg / 2;
+            const h = img.altura * img.escalaImg / 2;
+            minX = Math.min(minX, img.x - w);
+            maxX = Math.max(maxX, img.x + w);
+            minY = Math.min(minY, img.y - h);
+            maxY = Math.max(maxY, img.y + h);
+        });
+        
+        // Adicionar margem
+        const margem = 50;
+        minX -= margem;
+        minY -= margem;
+        maxX += margem;
+        maxY += margem;
+        
+        // Calcular dimensões
+        const larguraTotal = maxX - minX;
+        const alturaTotal = maxY - minY;
+        
+        // Criar canvas temporário
+        const canvasTemp = document.createElement('canvas');
+        canvasTemp.width = larguraTotal;
+        canvasTemp.height = alturaTotal;
+        const ctxTemp = canvasTemp.getContext('2d');
+        
+        // Fundo
+        ctxTemp.fillStyle = '#f5f5dc';
+        ctxTemp.fillRect(0, 0, larguraTotal, alturaTotal);
+        
+        // Ajustar origem
+        ctxTemp.translate(-minX, -minY);
+        
+        // Recalcular curvas
+        curvaCache.clear();
+        centro.nivel = 0;
+        
+        conexoes.forEach(conexao => {
+            conexao.para.nivel = calcularNivel(conexao.para);
+            const raioInicio = conexao.de === centro ? centro.raio : 0;
+            const curva = calcularCurva(
+                conexao.de.x, conexao.de.y,
+                conexao.para.x, conexao.para.y,
+                raioInicio
+            );
+            curvaCache.set(conexao.para, curva);
+        });
+        
+        // Desenhar linhas
+        conexoes.forEach(conexao => {
+            const curva = curvaCache.get(conexao.para);
+            const cor = conexao.cor;
+            const no = conexao.para;
+            const { inicio, cp1, cp2, fim } = curva;
+            let maxEspessura = CONFIG.ESPESSURA_BASE - (no.nivel * CONFIG.DECREMENTO_POR_NIVEL);
+            maxEspessura = Math.max(8, maxEspessura);
+            const passos = 100;
+            ctxTemp.lineCap = 'round';
+            
+            for(let i = 0; i <= passos; i++) {
+                const t = i / passos;
+                const getBezierPoint = (t, p0, p1, p2, p3) => (1-t)**3 * p0 + 3*(1-t)**2 * t * p1 + 3*(1-t) * t**2 * p2 + t**3 * p3;
+                const x = getBezierPoint(t, inicio.x, cp1.x, cp2.x, fim.x);
+                const y = getBezierPoint(t, inicio.y, cp1.y, cp2.y, fim.y);
+                let espessura = maxEspessura * (1 - t)**2 + 4;
+                espessura = Math.max(2, espessura);
+                ctxTemp.beginPath();
+                ctxTemp.arc(x, y, espessura / 2, 0, Math.PI * 2);
+                ctxTemp.fillStyle = cor;
+                ctxTemp.fill();
+            }
+        });
+        
+        // Desenhar textos nos ramos
+        nos.forEach(no => {
+            const curva = curvaCache.get(no);
+            if(curva) {
+                const { inicio, cp1, cp2, fim } = curva;
+                let textoOriginal = no.texto.toUpperCase();
+                const palavras = textoOriginal.split(' ').filter(p => p.length > 0);
+                
+                ctxTemp.save();
+                ctxTemp.fillStyle = '#333';
+                ctxTemp.textAlign = 'center';
+                ctxTemp.font = 'bold 20px Comic Sans MS';
+                
+                const getBezierPoint = (t, p0, p1, p2, p3) => (1-t)**3 * p0 + 3*(1-t)**2 * t * p1 + 3*(1-t) * t**2 * p2 + t**3 * p3;
+                
+                let tStart = 0.3;
+                let tEnd = 0.7;
+                const baseLineOffset = 15;
+                const lineHeight = 20;
+                
+                for (let pIdx = 0; pIdx < palavras.length; pIdx++) {
+                    const palavra = palavras[pIdx];
+                    const textoParaDesenhar = palavra.split('');
+                    let comprimentoTotal = 0;
+                    for(let char of textoParaDesenhar) {
+                        comprimentoTotal += ctxTemp.measureText(char).width;
+                    }
+                    let comprimentoPercorrido = 0;
+                    let currentYOffset = -baseLineOffset;
+                    if (palavras.length > 1) {
+                        const totalShift = (palavras.length - 1) * lineHeight;
+                        currentYOffset = -baseLineOffset + (pIdx * lineHeight) - (totalShift / 2);
+                    }
+                    let inverterTextoCurva = fim.x < inicio.x;
+                    let caracteresParaDesenhar = inverterTextoCurva ? [...textoParaDesenhar].reverse() : textoParaDesenhar;
+
+                    for (let i = 0; i < caracteresParaDesenhar.length; i++) {
+                        const char = caracteresParaDesenhar[i];
+                        const larguraChar = ctxTemp.measureText(char).width;
+                        const t = tStart + (tEnd - tStart) * (comprimentoPercorrido + larguraChar / 2) / comprimentoTotal;
+                        if (t > tEnd) break;
+                        const x = getBezierPoint(t, inicio.x, cp1.x, cp2.x, fim.x);
+                        const y = getBezierPoint(t, inicio.y, cp1.y, cp2.y, fim.y);
+                        const tNext = Math.min(t + 0.01, tEnd);
+                        const xNext = getBezierPoint(tNext, inicio.x, cp1.x, cp2.x, fim.x);
+                        const yNext = getBezierPoint(tNext, inicio.y, cp1.y, cp2.y, fim.y);
+                        let anguloChar = Math.atan2(yNext - y, xNext - x);
+                        if (xNext < x) {
+                            anguloChar += Math.PI;
+                        }
+                        ctxTemp.save();
+                        ctxTemp.translate(x, y);
+                        ctxTemp.rotate(anguloChar);
+                        ctxTemp.fillText(char, 0, currentYOffset);
+                        ctxTemp.restore();
+                        comprimentoPercorrido += larguraChar;
+                    }
+                }
+                ctxTemp.restore();
+            }
+        });
+        
+        // Desenhar centro
+        ctxTemp.save();
+        ctxTemp.beginPath();
+        ctxTemp.arc(centro.x, centro.y, centro.raio, 0, Math.PI * 2);
+        ctxTemp.fillStyle = centro.cor;
+        ctxTemp.fill();
+        ctxTemp.strokeStyle = '#333';
+        ctxTemp.lineWidth = 4;
+        ctxTemp.stroke();
+        ctxTemp.fillStyle = '#333';
+        ctxTemp.textAlign = 'center';
+        ctxTemp.textBaseline = 'middle';
+        const textoDisplay = centro.texto.toUpperCase();
+        if(centro.icone) {
+            ctxTemp.font = 'bold 30px Arial';
+            ctxTemp.fillText(centro.icone, centro.x, centro.y - 15);
+            ctxTemp.font = 'bold 16px Comic Sans MS';
+            ctxTemp.fillText(textoDisplay, centro.x, centro.y + 15);
+        } else {
+            ctxTemp.font = 'bold 18px Comic Sans MS';
+            ctxTemp.fillText(textoDisplay, centro.x, centro.y);
+        }
+        ctxTemp.restore();
+        
+        // Desenhar imagens livres
+        imagensLivres.forEach(imgObj => {
+            if (imgObj.img && imgObj.img.complete) {
+                const w = imgObj.largura * imgObj.escalaImg;
+                const h = imgObj.altura * imgObj.escalaImg;
+                ctxTemp.drawImage(imgObj.img, imgObj.x - w/2, imgObj.y - h/2, w, h);
+            }
+        });
+        
+        // Exportar
+        const link = document.createElement('a');
+        link.download = 'mapa-mental-buzan-' + new Date().toISOString().slice(0,10) + '.png';
+        link.href = canvasTemp.toDataURL('image/png', 1.0);
+        link.click();
+        
+        // Restaurar estado
+        escala = escalaTemp;
+        offsetCanvasX = offsetXTemp;
+        offsetCanvasY = offsetYTemp;
+        renderizar();
+    });
+}
+
+// ==================== EVENT LISTENERS - MOUSE ====================
+canvas.addEventListener('dblclick', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const no = encontrarNo(x, y);
+    if(no) abrirModal(no);
+});
+
+canvas.addEventListener('mousedown', (e) => {
+    mouseMoveu = false;
+    mouseDownTime = Date.now();
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    // 1. Verificar clique em botões de redimensionamento de imagem
+    if (imagemSelecionada) {
+        const w = imagemSelecionada.largura * imagemSelecionada.escalaImg;
+        const btnMaisX = imagemSelecionada.x * escala + offsetCanvasX + (w * escala / 2) + 30;
+        const btnMaisY = imagemSelecionada.y * escala + offsetCanvasY;
+        const btnMenosY = btnMaisY + 35;
+        
+        const distMais = Math.sqrt((x - btnMaisX)**2 + (y - btnMaisY)**2);
+        const distMenos = Math.sqrt((x - btnMaisX)**2 + (y - btnMenosY)**2);
+        
+        if (distMais < 15) {
+            redimensionarImagem(imagemSelecionada, 1.2);
+            return;
+        }
+        if (distMenos < 15) {
+            redimensionarImagem(imagemSelecionada, 0.8);
+            return;
+        }
+    }
+    
+    // 2. Verificar clique em botão de sub-ramo
+    const noBotao = encontrarBotaoSubRamo(x, y);
+    if (noBotao) {
+        adicionarRamo(noBotao);
+        return;
+    }
+    
+    // 3. Verificar clique em NÓ (prioridade para duplo-clique)
+    const no = encontrarNo(x, y);
+    
+    // 4. Se não clicou em nó, verificar imagem
+    if (!no) {
+        const imgClicada = encontrarImagem(x, y);
+        if (imgClicada) {
+            imagemSelecionada = imgClicada;
+            imagemArrastando = imgClicada;
+            offsetImgX = (x - offsetCanvasX) / escala - imgClicada.x;
+            offsetImgY = (y - offsetCanvasY) / escala - imgClicada.y;
+            canvas.style.cursor = 'move';
+            renderizar();
+            return;
+        } else {
+            imagemSelecionada = null;
+            renderizar();
+        }
+    }
+    
+    // 5. Pan com Shift ou botão do meio
+    if (e.shiftKey || e.button === 1) {
+        isPanning = true;
+        panStartX = e.clientX - offsetCanvasX;
+        panStartY = e.clientY - offsetCanvasY;
+        canvas.style.cursor = 'grab';
+        e.preventDefault();
+        return;
+    }
+    
+    // 6. Arrastar nó (se encontrou um)
+    if(no) {
+        noArrastando = no;
+        offsetX = (x - offsetCanvasX) / escala - no.x;
+        offsetY = (y - offsetCanvasY) / escala - no.y;
+        canvas.style.cursor = 'grabbing';
+    }
+});
+canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    // Pan
+    if (isPanning) {
+        offsetCanvasX = e.clientX - panStartX;
+        offsetCanvasY = e.clientY - panStartY;
+        renderizar();
+        return;
+    }
+     if (imagemArrastando) {
+        mouseMoveu = true;
+        const agora = Date.now();
+        if (agora - ultimoRender < CONFIG.THROTTLE_MS) return;
+        ultimoRender = agora;
+        
+        const newX = (x - offsetCanvasX) / escala - offsetImgX;
+        const newY = (y - offsetCanvasY) / escala - offsetImgY;
+        imagemArrastando.x = newX;
+        imagemArrastando.y = newY;
+        renderizar();
+        return;
+    }
+    // Arraste de nó
+    if(noArrastando) {
+        mouseMoveu = true;
+        const agora = Date.now();
+        if (agora - ultimoRender < CONFIG.THROTTLE_MS) return;
+        ultimoRender = agora;
+        
+        const newX = (x - offsetCanvasX) / escala - offsetX;
+        const newY = (y - offsetCanvasY) / escala - offsetY;
+        noArrastando.x = newX;
+        noArrastando.y = newY;
+        renderizar();
+        return;
+    }
+    
+    // Verificar hover em botões de sub-ramo
+    const noBotao = encontrarBotaoSubRamo(x, y);
+    if (noBotao) {
+        canvas.style.cursor = 'pointer';
+        renderizar();
+        return;
+    }
+    
+    // Hover effect em nós
+    const no = encontrarNo(x, y);
+    if (no !== noHover) {
+        noHover = no;
+        canvas.style.cursor = no ? 'pointer' : 'crosshair';
+        renderizar();
+    }
+});
+
+canvas.addEventListener('mouseup', (e) => {
+    const clickDuration = Date.now() - mouseDownTime;
+    
+    if (isPanning) {
+        isPanning = false;
+        canvas.style.cursor = 'crosshair';
+        return;
+    }
+	  if (imagemArrastando) {
+        imagemArrastando = null;
+        canvas.style.cursor = imagemSelecionada ? 'move' : 'crosshair';
+        return;
+    }
+    
+    noArrastando = null;
+    canvas.style.cursor = noHover ? 'pointer' : 'crosshair';
+});
+
+// Zoom com scroll
+canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    const novaEscala = Math.min(Math.max(0.1, escala * delta), 5);
+    
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    
+    offsetCanvasX = mouseX - (mouseX - offsetCanvasX) * (novaEscala / escala);
+    offsetCanvasY = mouseY - (mouseY - offsetCanvasY) * (novaEscala / escala);
+    
+    escala = novaEscala;
+    renderizar();
+}, { passive: false });
+
+// ==================== EVENT LISTENERS - TOUCH ====================
+canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    
+    if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        
+        // Verificar se tocou em um botão de sub-ramo
+        const noBotao = encontrarBotaoSubRamo(x, y);
+        if (noBotao) {
+            adicionarRamo(noBotao);
+            return;
+        }
+        
+        const no = encontrarNo(x, y);
+        if (no) {
+            noArrastando = no;
+            offsetX = (x - offsetCanvasX) / escala - no.x;
+            offsetY = (y - offsetCanvasY) / escala - no.y;
+        }
+    } else if (e.touches.length === 2) {
+        // Pinch to zoom
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        touchStartDist = Math.sqrt(dx * dx + dy * dy);
+    }
+}, { passive: false });
+
+canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    
+    if (e.touches.length === 1 && noArrastando) {
+        const touch = e.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        noArrastando.x = (touch.clientX - rect.left - offsetCanvasX) / escala - offsetX;
+        noArrastando.y = (touch.clientY - rect.top - offsetCanvasY) / escala - offsetY;
+        renderizar();
+    } else if (e.touches.length === 2) {
+        // Pinch zoom
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        
+    if (touchStartDist > 0) {
+            const delta = dist / touchStartDist;
+            const novaEscala = Math.min(Math.max(0.1, escala * delta), 5);
+            
+            const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+            const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = centerX - rect.left;
+            const mouseY = centerY - rect.top;
+            
+            offsetCanvasX = mouseX - (mouseX - offsetCanvasX) * (novaEscala / escala);
+            offsetCanvasY = mouseY - (mouseY - offsetCanvasY) * (novaEscala / escala);
+            
+            escala = novaEscala;
+            touchStartDist = dist;
+            renderizar();
+        }
+    }
+}, { passive: false });
+
+// Touch end unificado
+let lastTap = 0;
+canvas.addEventListener('touchend', (e) => {
+    // Limpar estados de arraste
+    if (e.touches.length === 0) {
+        noArrastando = null;
+        touchStartDist = 0;
+    }
+    
+    // Double tap para editar
+    const currentTime = new Date().getTime();
+    const tapLength = currentTime - lastTap;
+    if (tapLength < 500 && tapLength > 0 && e.touches.length === 0) {
+        const touch = e.changedTouches[0];
+        const rect = canvas.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        const no = encontrarNo(x, y);
+        if(no) abrirModal(no);
+    }
+    lastTap = currentTime;
+}, { passive: false });
+
+// ==================== EVENT LISTENERS - TECLADO ====================
+document.addEventListener('keydown', (e) => {
+    // Esc para fechar modal
+    if (e.key === 'Escape') {
+        fecharModal();
+        closeHelp();
+    }
+    
+   // Delete para excluir nó selecionado OU imagem
+    if (e.key === 'Delete') {
+        if (noSelecionado && noSelecionado !== centro) {
+            excluirNo();
+        } else if (imagemSelecionada) {
+            excluirImagemSelecionada();
+        }
+    }
+    
+    // Ctrl+S para salvar
+    if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        salvar();
+    }
+    
+    // Ctrl+E para exportar
+    if (e.ctrlKey && e.key === 'e') {
+        e.preventDefault();
+        exportarImagem();
+    }
+    
+    // Ctrl+Z para desfazer
+    if (e.ctrlKey && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        desfazer();
+    }
+    
+    // Ctrl+Y ou Ctrl+Shift+Z para refazer
+    if (e.ctrlKey && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+        e.preventDefault();
+        refazer();
+    }
+    
+    // Ctrl+N para novo ramo
+    if (e.ctrlKey && e.key === 'n') {
+        e.preventDefault();
+        adicionarRamo();
+    }
+    
+    // + e - para zoom
+    if (e.key === '+' || e.key === '=') {
+        e.preventDefault();
+        const novaEscala = Math.min(escala * 1.1, 5);
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        offsetCanvasX = centerX - (centerX - offsetCanvasX) * (novaEscala / escala);
+        offsetCanvasY = centerY - (centerY - offsetCanvasY) * (novaEscala / escala);
+        escala = novaEscala;
+        renderizar();
+    }
+    
+    if (e.key === '-' || e.key === '_') {
+        e.preventDefault();
+        const novaEscala = Math.max(escala * 0.9, 0.1);
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        offsetCanvasX = centerX - (centerX - offsetCanvasX) * (novaEscala / escala);
+        offsetCanvasY = centerY - (centerY - offsetCanvasY) * (novaEscala / escala);
+        escala = novaEscala;
+        renderizar();
+    }
+    
+    // 0 para resetar zoom
+    if (e.key === '0' && e.ctrlKey) {
+        e.preventDefault();
+        escala = 1;
+        offsetCanvasX = 0;
+        offsetCanvasY = 0;
+        renderizar();
+    }
+});
+
+// Enter no input de texto
+document.getElementById('editText').addEventListener('keypress', (e) => {
+    if(e.key === 'Enter') salvarEdicao();
+});
+
+// ==================== COLAR IMAGEM (Ctrl+V) ====================
+document.addEventListener('paste', (e) => {
+    e.preventDefault();
+    
+    const items = e.clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+            const blob = items[i].getAsFile();
+            const reader = new FileReader();
+            
+            reader.onload = (event) => {
+                salvarEstado();
+                // Adicionar no centro da tela visível
+                const centroX = (canvas.width / 2 - offsetCanvasX) / escala;
+                const centroY = (canvas.height / 2 - offsetCanvasY) / escala;
+                adicionarImagemLivre(event.target.result, centroX, centroY);
+            };
+            
+            reader.readAsDataURL(blob);
+            break;
+        }
+    }
+});
+
+// ==================== RESIZE ====================
+window.addEventListener('resize', () => {
+    const oldWidth = canvas.width;
+    const oldHeight = canvas.height;
+    
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight - 50;
+    
+    // Ajustar posição do centro proporcionalmente
+    const ratioX = canvas.width / oldWidth;
+    const ratioY = canvas.height / oldHeight;
+    
+    centro.x = centro.x * ratioX;
+    centro.y = centro.y * ratioY;
+    
+    // Ajustar offset do canvas
+    offsetCanvasX = offsetCanvasX * ratioX;
+    offsetCanvasY = offsetCanvasY * ratioY;
+    
+    // Ajustar posição de todos os nós
+    nos.forEach(no => {
+        no.x = no.x * ratioX;
+        no.y = no.y * ratioY;
+    });
+    
+    renderizar();
+});
+
+// ==================== INICIALIZAÇÃO ====================
+renderizar();
+adicionarRamo();
+
+// Salvar estado inicial
+setTimeout(() => {
+    salvarEstado();
+}, 100);
+
+// Prevenir context menu no canvas
+canvas.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+});
+
+// Mensagem de boas-vindas
+console.log('%c🧠 Mapa Mental Tony Buzan - Versão Avançada', 'color: #4CAF50; font-size: 20px; font-weight: bold;');
+console.log('%c✨ Melhorias implementadas:', 'color: #2196F3; font-size: 14px; font-weight: bold;');
+console.log('• Menu superior compacto');
+console.log('• Botões + verdes para adicionar sub-ramos');
+console.log('• Sistema de Undo/Redo');
+console.log('• Zoom e Pan suaves');
+console.log('• Suporte completo a touch');
+console.log('• Salvar/Carregar projetos (JSON)');
+console.log('• Exportar como imagem PNG');
+console.log('\n%cClique no botão ? para ver a ajuda completa!', 'color: #FF9800; font-size: 12px;');
+</script>
+</body>
+</html>
