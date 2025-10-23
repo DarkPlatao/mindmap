@@ -303,7 +303,6 @@
     </style>
 </head>
 <body>
-    <!-- Menu Superior -->
     <div id="topMenu">
         <h3>🧠 Mapa Mental</h3>
         
@@ -341,18 +340,14 @@
         <input type="file" id="loadFile" accept=".json" onchange="carregar(event)">
     </div>
     
-    <!-- Zoom Info -->
     <div id="zoomInfo">
         Zoom: <span id="zoomValue">100%</span>
     </div>
     
-    <!-- Help Button -->
     <button id="helpBtn" onclick="toggleHelp()" title="Ajuda">?</button>
     
-    <!-- Overlay -->
     <div class="overlay" id="overlay" onclick="closeHelp()"></div>
     
-    <!-- Help Modal -->
     <div id="helpModal">
         <span class="close-help" onclick="closeHelp()">×</span>
         <h2>📖 Como Usar</h2>
@@ -401,8 +396,7 @@
             <li><strong>Delete:</strong> Excluir imagem selecionada</li>
         </ul>
     </div>
-    <!-- Edit Modal -->
-<div id="editModal">
+    <div id="editModal">
     <input type="text" id="editText" placeholder="Digite a Palavra-Chave">
     <button class="primary-btn" onclick="salvarEdicao()">✅ Salvar</button>
     <button class="delete-btn" onclick="excluirNo()">🗑️ Excluir Ramo</button>
@@ -413,8 +407,20 @@
 <script>
 // ==================== CONFIGURAÇÃO ====================
 const CONFIG = {
-    ESPESSURA_BASE: 80,
-    DECREMENTO_POR_NIVEL: 40,
+    // ⬇️ NOVA CONFIGURAÇÃO DE ESPESSURA FIXA POR NÍVEL
+    ESPESSURAS_FIXAS: [
+        0,       // Nível 0 (Centro)
+        40,      // Nível 1 (Ramo Principal)
+        1,      // Nível 2 (1º Sub-ramo)
+        1,      // Nível 3 (2º Sub-ramo)
+        1,      // Nível 4 (3º Sub-ramo)
+        1        // Nível 5+ (Demais sub-ramos - valor mínimo de segurança)
+    ],
+    
+    // ❌ Variáveis de Espessura Antigas REMOVIDAS:
+    // ESPESSURA_NIVEL_1: 60,         
+    // DECREMENTO_POR_NIVEL: 50,      
+    
     RAIO_CENTRO: 60,
     DISTANCIA_RAMO_PRIMARIO: 150,
     DISTANCIA_SUB_RAMO: 70,
@@ -628,17 +634,25 @@ function calcularCurva(x1, y1, x2, y2, raioInicio) {
     const dy = y2 - inicio.y;
     const distancia = Math.sqrt(dx * dx + dy * dy) || 1;
     const angulo = Math.atan2(dy, dx);
-    const distCp1 = distancia * 0.35;
-    const distCp2 = distancia * 0.65;
+
+    // INÍCIO DAS ALTERAÇÕES MANUAIS
+    const distCp1 = distancia * 0.30; // Altera a distância do Ponto 1
+    const distCp2 = distancia * 0.90; // Altera a distância do Ponto 2
+    
     const perpAng = angulo + Math.PI / 2;
     const hash = Math.abs(Math.floor((inicio.x + inicio.y + x2 + y2)));
     const sign = (hash % 2 === 0) ? 1 : -1;
-    const maxOffset = Math.min(120, distancia * 0.25);
-    const offset = maxOffset * (0.6 + (hash % 40) / 100) * sign;
+    const maxOffset = Math.min(400, distancia * 0.25);
+    const offset = maxOffset * (0.8 + (hash % 50) / 100) * sign;
+    
     const cp1x = inicio.x + Math.cos(angulo) * distCp1 + Math.cos(perpAng) * offset;
     const cp1y = inicio.y + Math.sin(angulo) * distCp1 + Math.sin(perpAng) * offset;
-    const cp2x = inicio.x + Math.cos(angulo) * distCp2 - Math.cos(perpAng) * offset * 0.9;
-    const cp2y = inicio.y + Math.sin(angulo) * distCp2 - Math.sin(perpAng) * offset * 0.9;
+    
+    // Altera o fator de curvatura para 0.2 para deixar o final mais reto
+    const cp2x = inicio.x + Math.cos(angulo) * distCp2 - Math.cos(perpAng) * offset * 0.2; 
+    const cp2y = inicio.y + Math.sin(angulo) * distCp2 - Math.sin(perpAng) * offset * 0.2; 
+    // FIM DAS ALTERAÇÕES MANUAIS
+    
     return { inicio, cp1: { x: cp1x, y: cp1y }, cp2: { x: cp2x, y: cp2y }, fim: { x: x2, y: y2 } };
 }
 
@@ -855,8 +869,18 @@ function desenharLinha(conexao) {
     const cor = conexao.cor;
     const no = conexao.para;
     const { inicio, cp1, cp2, fim } = curva;
-    let maxEspessura = CONFIG.ESPESSURA_BASE - (no.nivel * CONFIG.DECREMENTO_POR_NIVEL);
-    maxEspessura = Math.max(8, maxEspessura);
+    
+    // ⬇️ NOVA LÓGICA: Obtém a espessura diretamente do array de espessuras fixas
+    let maxEspessura = CONFIG.ESPESSURAS_FIXAS[no.nivel];
+    
+    // Se o nível for maior do que o configurado, usa o último valor (o valor mínimo de segurança)
+    if (!maxEspessura || no.nivel >= CONFIG.ESPESSURAS_FIXAS.length) {
+        maxEspessura = CONFIG.ESPESSURAS_FIXAS[CONFIG.ESPESSURAS_FIXAS.length - 1];
+    }
+
+    // Garante que a espessura mínima seja 8px
+    maxEspessura = Math.max(0, maxEspessura);
+
     const passos = 100;
     ctx.lineCap = 'round';
     for(let i = 0; i <= passos; i++) {
@@ -1402,8 +1426,14 @@ function exportarImagem() {
             const cor = conexao.cor;
             const no = conexao.para;
             const { inicio, cp1, cp2, fim } = curva;
-            let maxEspessura = CONFIG.ESPESSURA_BASE - (no.nivel * CONFIG.DECREMENTO_POR_NIVEL);
-            maxEspessura = Math.max(8, maxEspessura);
+            
+            // Lógica de espessura fixa por nível (adaptada para a exportação)
+            let maxEspessura = CONFIG.ESPESSURAS_FIXAS[no.nivel];
+            if (!maxEspessura || no.nivel >= CONFIG.ESPESSURAS_FIXAS.length) {
+                maxEspessura = CONFIG.ESPESSURAS_FIXAS[CONFIG.ESPESSURAS_FIXAS.length - 1];
+            }
+            maxEspessura = Math.max(8, maxEspessura); // Mínimo de 8px
+
             const passos = 100;
             ctxTemp.lineCap = 'round';
             
@@ -1944,7 +1974,7 @@ canvas.addEventListener('contextmenu', (e) => {
 });
 
 // Mensagem de boas-vindas
-console.log('%c🧠 Mapa Mental Tony Buzan - Versão Avançada', 'color: #4CAF50; font-size: 20px; font-weight: bold;');
+console.log('%c🧠 Mapa Mental', 'color: #4CAF50; font-size: 20px; font-weight: bold;');
 console.log('%c✨ Melhorias implementadas:', 'color: #2196F3; font-size: 14px; font-weight: bold;');
 console.log('• Menu superior compacto');
 console.log('• Botões + verdes para adicionar sub-ramos');
